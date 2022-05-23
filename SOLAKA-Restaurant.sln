@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SolakaDatabase", "SolakaDatabase\SolakaDatabase.csproj", "{838B4BBB-203B-4205-9E3A-C26E67007448}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolakaDatabase", "SolakaDatabase\SolakaDatabase.csproj", "{838B4BBB-203B-4205-9E3A-C26E67007448}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderService\OrderService.csproj", "{0435CBBA-1417-4BDE-9A52-1B8DC74B1BDE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0435CBBA-1417-4BDE-9A52-1B8DC74B1BDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0435CBBA-1417-4BDE-9A52-1B8DC74B1BDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0435CBBA-1417-4BDE-9A52-1B8DC74B1BDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0435CBBA-1417-4BDE-9A52-1B8DC74B1BDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
