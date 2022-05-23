@@ -7,6 +7,7 @@ namespace SolakaDatabase.Models
     {
         public User()
         {
+            Customers = new HashSet<Customer>();
             EmployeeApps = new HashSet<EmployeeApp>();
             EmployeeRestos = new HashSet<EmployeeResto>();
         }
@@ -15,6 +16,7 @@ namespace SolakaDatabase.Models
         public string Username { get; set; } = null!;
         public string Password { get; set; } = null!;
 
+        public virtual ICollection<Customer> Customers { get; set; }
         public virtual ICollection<EmployeeApp> EmployeeApps { get; set; }
         public virtual ICollection<EmployeeResto> EmployeeRestos { get; set; }
     }
