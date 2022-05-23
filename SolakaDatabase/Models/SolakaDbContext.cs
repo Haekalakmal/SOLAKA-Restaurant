@@ -180,7 +180,7 @@ namespace SolakaDatabase.Models
             {
                 entity.ToTable("Role");
 
-                entity.Property(e => e.RoleName).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(50);
             });
 
             modelBuilder.Entity<User>(entity =>
