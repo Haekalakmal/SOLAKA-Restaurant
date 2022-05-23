@@ -15,7 +15,7 @@ builder.Services.AddDbContext<SolakaDbContext>(options =>
 // graphql
 builder.Services
     .AddGraphQLServer()
-    //.AddQueryType<Query>()
+    .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddAuthorization();
 

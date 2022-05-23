@@ -155,11 +155,11 @@ namespace UserService.GraphQL
         }
 
         [Authorize(Roles = new[] { "ADMIN" })]
-       /* public async Task<Customer> AddUserToCustomerAsync(
+        public async Task<Customer> AddUserToCustomerAsync(
            AddUserToCustomerInput input,
            [Service] SolakaDbContext context)
         {
-            var user = context.Users.Where(u => u.UserId == input.Id).FirstOrDefault();
+            var user = context.Users.Where(u => u.Id == input.Id).FirstOrDefault();
             if (user == null)
             {
                 return await Task.FromResult(new Customer());
@@ -167,8 +167,6 @@ namespace UserService.GraphQL
             // EF
             var customer = new Customer
             {
-                UserId = input.UserId,
-                RoleId = input.RoleId,
                 Name = input.Name,
                 Phone = input.Phone
 
@@ -178,7 +176,7 @@ namespace UserService.GraphQL
             await context.SaveChangesAsync();
 
             return ret.Entity;
-        }*/
+        }
 
         [Authorize(Roles = new[] { "ADMIN", "MANAGER" })]
         public async Task<EmployeeResto> AddUserToEmployeeRestoAsync(
