@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SolakaDatabase", "SolakaDatabase\SolakaDatabase.csproj", "{838B4BBB-203B-4205-9E3A-C26E67007448}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserService", "..\FoodDerlivery\UserService\UserService.csproj", "{94532F21-6903-40FB-A2C0-5CF88E36F4ED}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserService", "UserService\UserService.csproj", "{36601FEC-676A-4679-A108-663075DC2014}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{838B4BBB-203B-4205-9E3A-C26E67007448}.Release|Any CPU.Build.0 = Release|Any CPU
-		{94532F21-6903-40FB-A2C0-5CF88E36F4ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{94532F21-6903-40FB-A2C0-5CF88E36F4ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{94532F21-6903-40FB-A2C0-5CF88E36F4ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{94532F21-6903-40FB-A2C0-5CF88E36F4ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36601FEC-676A-4679-A108-663075DC2014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36601FEC-676A-4679-A108-663075DC2014}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36601FEC-676A-4679-A108-663075DC2014}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36601FEC-676A-4679-A108-663075DC2014}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
