@@ -1,5 +1,6 @@
 ﻿using HotChocolate.AspNetCore.Authorization;
-using OrderServices.GraphQL;
+using Microsoft.EntityFrameworkCore;
+using OrderService.GraphQL;
 using SolakaDatabase.Models;
 using System.Security.Claims;
 
@@ -12,27 +13,38 @@ namespace OrderService.GraphQL
             OrderData input, ClaimsPrincipal claimsPrincipal,
             [Service] SolakaDbContext context)
         {
+
             using var transaction = context.Database.BeginTransaction();
+
             var userName = claimsPrincipal.Identity.Name;
+
+
             try
             {
+
+
                 var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-                if (user != null)
+                var cost = context.Customers.Include(o => o.User).Where(o => o.UserId == user.Id).FirstOrDefault();
+
+                if (cost != null)
                 {
                     var order = new Order
                     {
-                        CustomerId = user.Id,
+                        CustomerId = cost.Id,
                         Invoice = Guid.NewGuid().ToString(),
                         PaymentId = input.PaymentId,
                         Created = DateTime.Now
+
+
                     };
+
                     foreach (var item in input.Details)
                     {
                         var detial = new OrderDetail
                         {
                             OrderId = order.Id,
-                            Cost = item.Cost,
                             ProductId = input.ProductId,
+                            Cost = item.Cost,
                             Quantity = item.Quantity,
                             Status = "BELUM DIBAYAR"
                         };
@@ -45,18 +57,27 @@ namespace OrderService.GraphQL
                     input.Id = order.Id;
                     input.Invoice = order.Invoice;
                     input.CustomerId = order.CustomerId;
+
+
                 }
+
                 else
-                throw new Exception("user was not found");
-        }
-            catch(Exception err)
+                    throw new Exception("user was not found");
+
+            }
+            catch (Exception err)
             {
                 transaction.Rollback();
             }
+
+
+
+
             return input;
         }
 
-        [Authorize(Roles = new[] { "ManagerApp", "ManagerResto" })]
+
+        [Authorize(Roles = new[] { "Customer" })]
         public async Task<OrderDetail> UpdateOrderAsync(
                        OrdersUpdate input,
                        [Service] SolakaDbContext context)
@@ -64,8 +85,13 @@ namespace OrderService.GraphQL
             var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
             if (orderDetail != null)
             {
+
+
+
+
                 orderDetail.Quantity = input.Quantity;
-                orderDetail.Cost = input.Cost;
+
+
 
                 context.OrderDetails.Update(orderDetail);
                 await context.SaveChangesAsync();
@@ -75,7 +101,55 @@ namespace OrderService.GraphQL
 
         }
 
-        [Authorize(Roles = new[] { "ManagerAPP" })]
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<OrderDetail> UpdateStatusAsync(
+                       OrdersUpdate input,
+                       [Service] SolakaDbContext context)
+        {
+            var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
+            if (orderDetail != null)
+            {
+
+
+
+
+                orderDetail.Status = "SUDAH DIBAYAR";
+
+
+                context.OrderDetails.Update(orderDetail);
+                await context.SaveChangesAsync();
+            }
+
+            return await Task.FromResult(orderDetail);
+
+        }
+
+        [Authorize(Roles = new[] { "Customer" })]
+        public async Task<OrderDetail> CancelOrderAsync(
+       StatusOrder input, ClaimsPrincipal claimsPrincipal,
+       [Service] SolakaDbContext context)
+        {
+            var userName = claimsPrincipal.Identity.Name;
+
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+            var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
+
+            if (user != null)
+            {
+
+                orderDetail.Status = "CANCEL";
+
+
+                context.OrderDetails.Update(orderDetail);
+                await context.SaveChangesAsync();
+            }
+
+            return await Task.FromResult(orderDetail);
+
+        }
+
+
+        [Authorize(Roles = new[] { "ManagerApp" })]
         public async Task<Order> DeleteOrderByIdAsync(
        int id,
        [Service] SolakaDbContext context)
@@ -94,5 +168,34 @@ namespace OrderService.GraphQL
 
             return await Task.FromResult(order);
         }
+
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<Restaurant> UpdateRestoByIdAsync(
+       RestoUpdate input, ClaimsPrincipal claimsPrincipal,
+      [Service] SolakaDbContext context)
+        {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+            
+            var resto = context.Restaurants.Include(o => o.EmployeeRestos).Where(o => o.Id == user.Id).FirstOrDefault();
+
+            var updateresto = context.Restaurants.Where(o => o.Id == input.Id).FirstOrDefault();
+
+          
+                if (resto != null)
+                {
+                    updateresto.Location = input.Location;
+                    updateresto.NameResto = input.NameResto;
+
+
+                    context.Restaurants.Update(updateresto);
+                    await context.SaveChangesAsync();
+                }
+
+
+
+                return await Task.FromResult(resto);
+            }
+           
     }
 }
