@@ -7,7 +7,7 @@ namespace SolakaDatabase.Models
     {
         public Product()
         {
-            Orders = new HashSet<Order>();
+            OrderDetails = new HashSet<OrderDetail>();
         }
 
         public int Id { get; set; }
@@ -19,6 +19,6 @@ namespace SolakaDatabase.Models
 
         public virtual Category Category { get; set; } = null!;
         public virtual Restaurant Resto { get; set; } = null!;
-        public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

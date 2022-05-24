@@ -129,7 +129,7 @@ namespace UserService.GraphQL
         }
 
         public async Task<UserData> RegisterCustomerAsync(
-           RegisterUser input,
+           RegisterCustomer input,
            [Service] SolakaDbContext context)
         {
             var role = context.Customers.FirstOrDefault();
@@ -146,12 +146,14 @@ namespace UserService.GraphQL
             var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
            
-            var employeeResto = new EmployeeResto
+            var customer = new Customer
             {
                 RoleId = role.Id,
-                UserId = newUser.Id
+                UserId = newUser.Id,
+                Name = input.Name,
+                Phone = input.Phone
             };
-            newUser.EmployeeRestos.Add(employeeResto);
+            newUser.Customers.Add(customer);
             // EF
             await context.SaveChangesAsync();
             return await Task.FromResult(new UserData
@@ -316,7 +318,7 @@ namespace UserService.GraphQL
         //MANAGE CUSTOMER
         [Authorize(Roles = new[] { "OperatorResto" })]
         public async Task<Customer> UpdateCustomerAsync(
-            AddUserToCustomerInput input,
+            RegisterCustomer input,
             [Service] SolakaDbContext context)
         {
             var cust = context.Customers.Where(o => o.Id == input.Id).FirstOrDefault();
@@ -331,6 +333,34 @@ namespace UserService.GraphQL
 
 
             return await Task.FromResult(cust);
+        }
+
+        public async Task<RestoData> AddRestoAsync(
+            AddResto input,
+            [Service] SolakaDbContext context)
+        {
+            var resto = context.Restaurants.Where(u => u.NameResto == input.NameResto).FirstOrDefault();
+            if (resto != null)
+            {
+                return await Task.FromResult(new RestoData());
+            }
+            var newResto = new Restaurant
+            {
+                NameResto = input.NameResto,
+                Location = input.Location
+            };
+            // EF
+            var ret = context.Restaurants.Add(newResto);
+            await context.SaveChangesAsync();
+
+
+
+            return await Task.FromResult(new RestoData
+            {
+                Id = newResto.Id,
+                NameResto = newResto.NameResto,
+                Location = newResto.Location
+            });
         }
 
         /*[Authorize(Roles = new[] { "ManagerResto" })]

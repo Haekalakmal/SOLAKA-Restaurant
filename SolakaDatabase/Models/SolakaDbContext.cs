@@ -33,7 +33,7 @@ namespace SolakaDatabase.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=DESKTOP-V0TB2P3\\SQLEXPRESS;Database=SolakaDb;uid=tester;pwd=pass123;");
+                optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=SolakaDb;uid=tester;pwd=pass123;");
             }
         }
 
@@ -136,12 +136,6 @@ namespace SolakaDatabase.Models
                     .HasForeignKey(d => d.PaymentId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Order_Payment");
-
-                entity.HasOne(d => d.Product)
-                    .WithMany(p => p.Orders)
-                    .HasForeignKey(d => d.ProductId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Order_Products");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>
@@ -153,6 +147,18 @@ namespace SolakaDatabase.Models
                     .HasForeignKey(d => d.OrderId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderDetails_Order");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.ProductId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderDetails_Products");
+
+                entity.HasOne(d => d.Resto)
+                    .WithMany(p => p.OrderDetails)
+                    .HasForeignKey(d => d.RestoId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OrderDetails_Restaurant");
             });
 
             modelBuilder.Entity<PaymentMethod>(entity =>

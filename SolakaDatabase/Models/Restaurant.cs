@@ -8,6 +8,7 @@ namespace SolakaDatabase.Models
         public Restaurant()
         {
             EmployeeRestos = new HashSet<EmployeeResto>();
+            OrderDetails = new HashSet<OrderDetail>();
             Products = new HashSet<Product>();
         }
 
@@ -16,6 +17,7 @@ namespace SolakaDatabase.Models
         public string Location { get; set; } = null!;
 
         public virtual ICollection<EmployeeResto> EmployeeRestos { get; set; }
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public virtual ICollection<Product> Products { get; set; }
     }
 }

@@ -1,10 +1,10 @@
 ﻿namespace UserService.GraphQL
 {
-    public record AddUserToCustomerInput
+    public record RegisterCustomer
     (
         int? Id,
-        int UserId,
-        int RoleId,
+        string UserName,
+        string Password,
         string Name, 
         string Phone
         );
