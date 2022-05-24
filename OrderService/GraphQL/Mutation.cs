@@ -23,7 +23,6 @@ namespace OrderService.GraphQL
                     {
                         CustomerId = user.Id,
                         Invoice = Guid.NewGuid().ToString(),
-                        ProductId = input.ProductId,
                         PaymentId = input.PaymentId,
                         Created = DateTime.Now
                     };
@@ -33,6 +32,7 @@ namespace OrderService.GraphQL
                         {
                             OrderId = order.Id,
                             Cost = item.Cost,
+                            ProductId = input.ProductId,
                             Quantity = item.Quantity,
                             Status = "BELUM DIBAYAR"
                         };

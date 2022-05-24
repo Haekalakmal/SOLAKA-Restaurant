@@ -13,11 +13,13 @@ namespace SolakaDatabase.Models
         public int Id { get; set; }
         public string Invoice { get; set; } = null!;
         public int CustomerId { get; set; }
+        public int RestoId { get; set; }
         public int PaymentId { get; set; }
         public DateTime Created { get; set; }
 
         public virtual Customer Customer { get; set; } = null!;
         public virtual PaymentMethod Payment { get; set; } = null!;
+        public virtual Restaurant Resto { get; set; } = null!;
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }

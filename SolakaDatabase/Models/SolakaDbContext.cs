@@ -136,6 +136,12 @@ namespace SolakaDatabase.Models
                     .HasForeignKey(d => d.PaymentId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Order_Payment");
+
+                entity.HasOne(d => d.Resto)
+                    .WithMany(p => p.Orders)
+                    .HasForeignKey(d => d.RestoId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Order_Restaurant");
             });
 
             modelBuilder.Entity<OrderDetail>(entity =>
@@ -153,12 +159,6 @@ namespace SolakaDatabase.Models
                     .HasForeignKey(d => d.ProductId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderDetails_Products");
-
-                entity.HasOne(d => d.Resto)
-                    .WithMany(p => p.OrderDetails)
-                    .HasForeignKey(d => d.RestoId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_OrderDetails_Restaurant");
             });
 
             modelBuilder.Entity<PaymentMethod>(entity =>
