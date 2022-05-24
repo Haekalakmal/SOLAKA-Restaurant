@@ -69,18 +69,49 @@ namespace OrderService.GraphQL
         }
 
         [Authorize(Roles = new[] { "Customer" })]
-        public async Task<OrderDetail> UpdateOrderByCustomerAsync(
+        public async Task<OrdersOutput> UpdateOrderByCustomerAsync(
             OrdersUpdate input,
+            ClaimsPrincipal claimsPrincipal,
             [Service] SolakaDbContext context)
         {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+
+            var order = context.Orders.FirstOrDefault();
+            var customer = context.Customers.Include(c=>c.Orders).Where(c => c.UserId == user.Id && c.Id == order.CustomerId).FirstOrDefault();
+
             var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
+
+            if(customer == null) return new OrdersOutput
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Customer tidak ada akses!"
+            };
+
             if (orderDetail != null)
             {
+                var product = context.Products.FirstOrDefault();
+
+                orderDetail.ProductId = input.ProductId;
                 orderDetail.Quantity = input.Quantity;
+                orderDetail.Cost = product.Price * input.Quantity;
                 context.OrderDetails.Update(orderDetail);
                 await context.SaveChangesAsync();
+
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Done Update Order!"
+                };
             }
-            return await Task.FromResult(orderDetail);
+            else
+            {
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Gagal Update Order!"
+                };
+            }
         }
 
         [Authorize(Roles = new[] { "ManagerResto" })]

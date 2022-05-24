@@ -6,6 +6,6 @@ namespace OrderService.GraphQL
     (
          int Id,
         int Quantity,
-        int Product
+        int ProductId
     );
 }
