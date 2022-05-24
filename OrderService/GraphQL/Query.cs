@@ -24,5 +24,20 @@ namespace OrderService.GraphQL
         [Authorize(Roles = new[] { "ManagerApp" })]
         public IQueryable<Order> GetManagerOrders([Service] SolakaDbContext context) =>
           context.Orders.Include(o=>o.OrderDetails);
+
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public IQueryable<Order> GetManagerRestoOrders([Service] SolakaDbContext context, ClaimsPrincipal claimsPrincipal)
+        {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+            //var resto = context.Restaurants.FirstOrDefault();
+            var managerResto = context.EmployeeRestos.Where(e => e.UserId == user.Id).FirstOrDefault();
+            if (managerResto != null)
+            {
+                var orders = context.Orders.Include(o => o.OrderDetails).Where(o => o.RestoId == managerResto.RestoId);
+                return orders.AsQueryable();
+            }
+            return new List<Order>().AsQueryable();
+        }
     }
 }
