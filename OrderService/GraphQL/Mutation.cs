@@ -130,21 +130,44 @@ namespace OrderService.GraphQL
         }
 
         [Authorize(Roles = new[] { "Customer" })]
-        public async Task<OrderDetail> CancelOrderAsync(
-       StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
-       [Service] SolakaDbContext context)
+        public async Task<OrdersOutput> CancleOrderByCustomerAsync(
+        StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
+        [Service] SolakaDbContext context)
         {
             var userName = claimsPrincipal.Identity.Name;
+
             var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
             var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
+            var order = context.Orders.FirstOrDefault();
+            var customer = context.Customers.Where(o => o.UserId == user.Id && o.Id == order.CustomerId).FirstOrDefault();
 
-            if (user != null)
+            if (customer == null)
             {
-                orderDetail.Status = "CANCEL";
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "User tidak ada akses!"
+                };
+
+            }
+
+            if (orderDetail != null)
+            {
+
+                orderDetail.Status = StatusOrder.Cancel;
+
+
                 context.OrderDetails.Update(orderDetail);
                 await context.SaveChangesAsync();
+
+
             }
-            return await Task.FromResult(orderDetail);
+            return new OrdersOutput
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Berhasil Membatalkan Pesanan!"
+            };
+
         }
 
         [Authorize(Roles = new[] { "ManagerApp" })]
