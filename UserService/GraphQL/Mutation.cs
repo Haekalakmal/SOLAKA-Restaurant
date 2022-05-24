@@ -211,7 +211,7 @@ namespace UserService.GraphQL
                 var userEmployeeApps = context.EmployeeApps.Where(c => c.UserId == user.Id).ToList();
                 foreach (var userEmployeeApp in userEmployeeApps)
                 {
-                    var role = context.Roles.Where(o => o.Id == userEmployeeApp.Id).FirstOrDefault();
+                    var role = context.Roles.Where(o => o.Id == userEmployeeApp.RoleId).FirstOrDefault();
                     if (role != null)
                     {
                         claims.Add(new Claim(ClaimTypes.Role, role.Name));

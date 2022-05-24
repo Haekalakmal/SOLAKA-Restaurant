@@ -7,26 +7,18 @@ namespace OrderService.GraphQL
 {
     public class Mutation
     {
-        [Authorize(Roles = new[] { "ManagerAPP" })]
+        [Authorize(Roles = new[] { "Customer" })]
         public async Task<OrderData> AddOrderAsync(
             OrderData input, ClaimsPrincipal claimsPrincipal,
             [Service] SolakaDbContext context)
         {
-
             using var transaction = context.Database.BeginTransaction();
             var userName = claimsPrincipal.Identity.Name;
-
             try
             {
-
-
                 var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-
-
                 if (user != null)
                 {
-
-
                     var order = new Order
                     {
                         CustomerId = user.Id,
@@ -34,12 +26,7 @@ namespace OrderService.GraphQL
                         ProductId = input.ProductId,
                         PaymentId = input.PaymentId,
                         Created = DateTime.Now
-
-
                     };
-
-
-
                     foreach (var item in input.Details)
                     {
                         var detial = new OrderDetail
@@ -58,10 +45,7 @@ namespace OrderService.GraphQL
                     input.Id = order.Id;
                     input.Invoice = order.Invoice;
                     input.CustomerId = order.CustomerId;
-
-
                 }
-            
                 else
                 throw new Exception("user was not found");
         }
@@ -69,13 +53,10 @@ namespace OrderService.GraphQL
             {
                 transaction.Rollback();
             }
-
-
-
             return input;
         }
 
-        [Authorize(Roles = new[] { "ManagerAPP" })]
+        [Authorize(Roles = new[] { "ManagerApp", "ManagerResto" })]
         public async Task<OrderDetail> UpdateOrderAsync(
                        OrdersUpdate input,
                        [Service] SolakaDbContext context)
@@ -83,12 +64,7 @@ namespace OrderService.GraphQL
             var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
             if (orderDetail != null)
             {
-
-              
-
-
                 orderDetail.Quantity = input.Quantity;
-
                 orderDetail.Cost = input.Cost;
 
                 context.OrderDetails.Update(orderDetail);
