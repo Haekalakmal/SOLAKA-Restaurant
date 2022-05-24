@@ -8,7 +8,6 @@ namespace UserService.GraphQL
 {
     public class Query
     {
-
         [Authorize(Roles = new[] { "AdminApp" })] // dapat diakses kalau sudah login
         public IQueryable<UserData> GetUsers([Service] SolakaDbContext context) =>
             context.Users.Select(p => new UserData()
@@ -17,21 +16,16 @@ namespace UserService.GraphQL
                 Username = p.Username
             });
 
-        //[Authorize]
-        //public IQueryable<Profile> GetProfilesbyToken([Service]
-        //SolakaDbContext context, ClaimsPrincipal claimsPrincipal)
-        //{
-        //    var userName = claimsPrincipal.Identity.Name;
-        //    var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-        //    if (user != null)
-        //    {
-        //        var profiles = context.Profiles.Where(o => o.UserId == user.Id);
-        //        return profiles.AsQueryable();
-        //    }
-        //    return new List<Profile>().AsQueryable();
-        //}
+        [Authorize(Roles = new[] { "AdminApp" })]
+        public IQueryable<RestoData> GetRestaurant([Service] SolakaDbContext context) =>
+          context.Restaurants.Select(p => new RestoData()
+          {
+              Id = p.Id,
+              NameResto = p.NameResto,
+              Location = p.Location
+          });
 
-        [Authorize(Roles = new[] { "ManagerResto" })]
+        [Authorize(Roles = new[] { "ManagerApp" })]
         public IQueryable<User> GetCustomer([Service] SolakaDbContext context)
         {
             var roleCust = context.Roles.Where(k => k.Name == "Customer").FirstOrDefault();
@@ -39,12 +33,21 @@ namespace UserService.GraphQL
             return kurirs.AsQueryable();
         }
 
-       /* public IQueryable<EmployeeResto> GetEmployeeResto([Service] SolakaDbContext context)
-        {
-            var roleResto = context.Roles.Where(k => k.Name == "OperatorResto" && k.Name == "ManagerResto");
-            return roleResto.AsQueryable();
-            return new List<EmployeeResto>().AsQueryable();
-        }*/
+        //[Authorize(Roles = new[] { "ManagerResto" })]
+        //public IQueryable<User> GetCustomer([Service] SolakaDbContext context)
+        //{
+        //    var roleCust = context.Roles.Where(k => k.Name == "Customer").FirstOrDefault();
+        //    var kurirs = context.Users.Where(k => k.Customers.Any(o => o.RoleId == roleCust.Id));
+        //    return kurirs.AsQueryable();
+        //}
+
+        /* public IQueryable<EmployeeResto> GetEmployeeResto([Service] SolakaDbContext context)
+         {
+             var roleResto = context.Roles.Where(k => k.Name == "OperatorResto" && k.Name == "ManagerResto");
+             return roleResto.AsQueryable();
+             return new List<EmployeeResto>().AsQueryable();
+         }*/
+
         //[Authorize(Roles = new[] { "MANAGER" })]
         //public IQueryable<Courier> GetCourierProfiles([Service] FoodDeliveryContext context) =>
         //    context.Couriers.Select(p => new Courier()
@@ -56,6 +59,6 @@ namespace UserService.GraphQL
         //        Availibility = p.Availibility
         //    });
 
-
+        
     }
 }
