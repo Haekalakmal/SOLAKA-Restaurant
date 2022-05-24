@@ -134,22 +134,49 @@ namespace OrderService.GraphQL
         }
 
         [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<Restaurant> UpdateRestoByIdAsync(
-       RestoUpdate input, ClaimsPrincipal claimsPrincipal,
-      [Service] SolakaDbContext context)
+        public async Task<OrdersOutput> UpdateOrderRestoByIdAsync(
+       OrderUpdateByResto input, ClaimsPrincipal claimsPrincipal,
+       [Service] SolakaDbContext context)
         {
             var userName = claimsPrincipal.Identity.Name;
             var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-            var resto = context.Restaurants.Include(o => o.EmployeeRestos).Where(o => o.Id == user.Id).FirstOrDefault();
-            var updateresto = context.Restaurants.Where(o => o.Id == input.Id).FirstOrDefault();
-                if (resto != null)
+
+            var resto = context.Restaurants.FirstOrDefault();
+            var managerresto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == resto.Id).FirstOrDefault();
+
+            var same = context.Orders.Where(o => o.RestoId == resto.Id).FirstOrDefault();
+            var updateorderresto = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+
+            if (managerresto == null)
+
+                return new OrdersOutput
                 {
-                    updateresto.Location = input.Location;
-                    updateresto.NameResto = input.NameResto;
-                    context.Restaurants.Update(updateresto);
-                    await context.SaveChangesAsync();
-                }
-                return await Task.FromResult(resto);
-            }    
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager tidak ada akses!"
+                };
+
+            if (same != null)
+            {
+                updateorderresto.Invoice = input.Invoice;
+
+                context.Orders.Update(updateorderresto);
+                await context.SaveChangesAsync();
+
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Done Update Order!"
+                };
+            }
+            else
+            {
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Gagal Update Order!"
+                };
+            }
+
+        }
     }
 }
