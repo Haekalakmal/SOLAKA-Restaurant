@@ -13,46 +13,13 @@ namespace UserService.GraphQL
     {
         //REGISTER
 
-        public async Task<UserData> RegisterAdminAPPAsync(
-            RegisterUser input,
-            [Service] SolakaDbContext context)
-        {
-            var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
-            if (user != null)
-            {
-                return await Task.FromResult(new UserData());
-            }
-            var newUser = new User
-            {
-                Username = input.UserName,
-                Password = BCrypt.Net.BCrypt.HashPassword(input.Password), // encrypt password
-            };
-            var memberRole = context.Roles.Where(m => m.Name == "AdminAPP").FirstOrDefault();
-            if (memberRole == null)
-                throw new Exception("Invalid Role");
-            var employeeApp = new EmployeeApp
-            {
-                RoleId = memberRole.Id,
-                UserId = newUser.Id
-            };
-            newUser.EmployeeApps.Add(employeeApp);
-            // EF
-            var ret = context.Users.Add(newUser);
-            await context.SaveChangesAsync();
-
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.Id,
-                Username = newUser.Username,
-
-            });
-        }
-
+        [Authorize(Roles = new[] { "ManagerApp" })]
         public async Task<UserData> RegisterOperatorRestoAsync(
-           RegisterUser input,
+           RegisteOperatorResto input,
            [Service] SolakaDbContext context)
         {
-            var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
+            var role = context.EmployeeRestos.FirstOrDefault();
+            var user = context.Users.Where(o => o.Id == input.Id && role.RoleId == 2).FirstOrDefault();
             if (user != null)
             {
                 return await Task.FromResult(new UserData());
@@ -62,17 +29,19 @@ namespace UserService.GraphQL
                 Username = input.UserName,
                 Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
             };
-            var memberRole = context.Roles.Where(m => m.Name == "OperatorResto").FirstOrDefault();
-            if (memberRole == null)
-                throw new Exception("Invalid Role");
+            var ret = context.Users.Add(newUser);
+            await context.SaveChangesAsync();
             var employeeResto = new EmployeeResto
             {
-                RoleId = memberRole.Id,
-                UserId = newUser.Id
+                RoleId = role.Id,
+                UserId = newUser.Id,
+                RestoId = input.RestoId,
+                Fullname = input.Fullname,
+                Email = input.Email,
+                
             };
             newUser.EmployeeRestos.Add(employeeResto);
             // EF
-            var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
 
             return await Task.FromResult(new UserData
@@ -82,9 +51,9 @@ namespace UserService.GraphQL
 
             });
         }
-
+        [Authorize(Roles = new[] { "AdminAPP" })]
         public async Task<UserData> RegisterManagerAppAsync(
-           RegisterManagerApp input,
+           RegisterApp input,
            [Service] SolakaDbContext context)
         {
             var role = context.EmployeeApps.FirstOrDefault();
@@ -122,12 +91,13 @@ namespace UserService.GraphQL
 
             });
         }
-
+        [Authorize(Roles = new[] { "OperatorResto" })]
         public async Task<UserData> RegisterManagerRestoAsync(
            RegisterUser input,
            [Service] SolakaDbContext context)
         {
-            var user = context.Users.Where(o => o.Username == input.UserName).FirstOrDefault();
+            var role = context.EmployeeRestos.FirstOrDefault();
+            var user = context.Users.Where(o => o.Id == input.Id && role.RoleId == 4).FirstOrDefault();
             if (user != null)
             {
                 return await Task.FromResult(new UserData());
@@ -139,12 +109,10 @@ namespace UserService.GraphQL
             };
             var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
-            var memberRole = context.Roles.Where(m => m.Name == "ManagerResto").FirstOrDefault();
-            if (memberRole == null)
-                throw new Exception("Invalid Role");
+            
             var employeeResto = new EmployeeResto
             {
-                RoleId = memberRole.Id,
+                RoleId = role.Id,
                 UserId = newUser.Id
             };
             newUser.EmployeeRestos.Add(employeeResto);
@@ -152,6 +120,40 @@ namespace UserService.GraphQL
             //var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
 
+            return await Task.FromResult(new UserData
+            {
+                Id = newUser.Id,
+                Username = newUser.Username,
+
+            });
+        }
+
+        public async Task<UserData> RegisterCustomerAsync(
+           RegisterUser input,
+           [Service] SolakaDbContext context)
+        {
+            var role = context.Customers.FirstOrDefault();
+            var user = context.Users.Where(o => o.Id == input.Id && role.RoleId == 5).FirstOrDefault();
+            if (user != null)
+            {
+                return await Task.FromResult(new UserData());
+            }
+            var newUser = new User
+            {
+                Username = input.UserName,
+                Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
+            };
+            var ret = context.Users.Add(newUser);
+            await context.SaveChangesAsync();
+           
+            var employeeResto = new EmployeeResto
+            {
+                RoleId = role.Id,
+                UserId = newUser.Id
+            };
+            newUser.EmployeeRestos.Add(employeeResto);
+            // EF
+            await context.SaveChangesAsync();
             return await Task.FromResult(new UserData
             {
                 Id = newUser.Id,
@@ -228,6 +230,16 @@ namespace UserService.GraphQL
                     }
                 }
 
+                var userCustomers = context.Customers.Where(c => c.UserId == user.Id).ToList();
+                foreach (var customers in userCustomers)
+                {
+                    var role = context.Roles.Where(o => o.Id == customers.RoleId).FirstOrDefault();
+                    if(role != null)
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role.Name));
+                    }
+                }
+
                 var expired = DateTime.Now.AddHours(3);
                 var jwtToken = new JwtSecurityToken(
                     issuer: tokenSettings.Value.Issuer,
@@ -240,7 +252,7 @@ namespace UserService.GraphQL
                 return await Task.FromResult(
                     new UserToken(new JwtSecurityTokenHandler().WriteToken(jwtToken),
                     expired.ToString(), null));
-                //return new JwtSecurityTokenHandler().WriteToken(jwtToken);
+                
             }
 
             return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
@@ -302,35 +314,8 @@ namespace UserService.GraphQL
         }
 
         //MANAGE CUSTOMER
-        [Authorize(Roles = new[] { "AdminAPP" })]
-        public async Task<Customer> AddUserToCustomerAsync(
-           AddUserToCustomerInput input,
-           [Service] SolakaDbContext context)
-        {
-            var user = context.Users.Where(u => u.Id == input.UserId).FirstOrDefault();
-            if (user == null)
-            {
-                return await Task.FromResult(new Customer());
-            }
-            // EF
-            var customer = new Customer
-            {
-                Name = input.Name,
-                Phone = input.Phone,
-                RoleId = input.RoleId,
-                UserId = input.UserId
-                
-
-            };
-
-            var ret = context.Customers.Add(customer);
-            await context.SaveChangesAsync();
-
-            return ret.Entity;
-        }
-
-        [Authorize(Roles = new[] { "AdminAPP" })]
-        public async Task<Customer> UpdateUserToCustomerAsync(
+        [Authorize(Roles = new[] { "OperatorResto" })]
+        public async Task<Customer> UpdateCustomerAsync(
             AddUserToCustomerInput input,
             [Service] SolakaDbContext context)
         {
@@ -348,7 +333,7 @@ namespace UserService.GraphQL
             return await Task.FromResult(cust);
         }
 
-        [Authorize(Roles = new[] { "ManagerResto" })]
+        /*[Authorize(Roles = new[] { "ManagerResto" })]
         public async Task<EmployeeResto> AddUserToEmployeeRestoAsync(
           AddUserToEmployeeResto input,
           [Service] SolakaDbContext context)
@@ -371,9 +356,9 @@ namespace UserService.GraphQL
             var ret = context.EmployeeRestos.Add(employeeResto);
             await context.SaveChangesAsync();
             return ret.Entity;
-        }
+        }*/
 
-        [Authorize(Roles = new[] { "ManagerApp" , "AdminAPP" })]
+        /*[Authorize(Roles = new[] { "ManagerApp" , "AdminAPP" })]
         public async Task<EmployeeApp> AddUserToEmployeeAppAsync(
          AddUserToEmployeeApp input,
          [Service] SolakaDbContext context)
@@ -397,7 +382,7 @@ namespace UserService.GraphQL
             await context.SaveChangesAsync();
 
             return ret.Entity;
-        }
+        }*/
 
 
 
