@@ -5,12 +5,10 @@ namespace OrderService.GraphQL
     public record OrdersInput
     (
       int? Id,
-       string Invoice,
-      int CustomerId,
-       int ProductId,
-       int PaymentId,
-      DateTime? Created,
+      string Invoice,
+      int RestoId,
+      int PaymentId,
 
-        List<OrderDetailsData> OrderDetailsDatas
+      List<ListOrderDetails> ListOrderDetails
     );
 }
