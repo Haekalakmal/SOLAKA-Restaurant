@@ -1,8 +1,9 @@
 ﻿namespace UserService.GraphQL
 {
-    public record RegisterManagerApp
+    public record RegisteOperatorResto
     (
         int? Id,
+        int RestoId,
         string UserName,
         string Password,
         string Fullname,
