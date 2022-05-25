@@ -11,10 +11,12 @@ namespace SolakaDatabase.Models
         }
 
         public int Id { get; set; }
-        public string Invoice { get; set; } = null!;
+        public string TransactionCode { get; set; } = null!;
         public int CustomerId { get; set; }
         public int RestoId { get; set; }
         public int PaymentId { get; set; }
+        public double TotalCost { get; set; }
+        public string Status { get; set; } = null!;
         public DateTime Created { get; set; }
 
         public virtual Customer Customer { get; set; } = null!;

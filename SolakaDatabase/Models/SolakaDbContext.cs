@@ -33,7 +33,7 @@ namespace SolakaDatabase.Models
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-                optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=SolakaDb;uid=tester;pwd=pass123;");
+                optionsBuilder.UseSqlServer("Server=DESKTOP-V0TB2P3\\SQLEXPRESS;Database=SolakaDb;uid=tester;pwd=pass123;");
             }
         }
 
@@ -123,7 +123,9 @@ namespace SolakaDatabase.Models
 
                 entity.Property(e => e.Created).HasColumnType("datetime");
 
-                entity.Property(e => e.Invoice).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(50);
+
+                entity.Property(e => e.TransactionCode).HasMaxLength(50);
 
                 entity.HasOne(d => d.Customer)
                     .WithMany(p => p.Orders)
@@ -146,8 +148,6 @@ namespace SolakaDatabase.Models
 
             modelBuilder.Entity<OrderDetail>(entity =>
             {
-                entity.Property(e => e.Status).HasMaxLength(50);
-
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetails)
                     .HasForeignKey(d => d.OrderId)
