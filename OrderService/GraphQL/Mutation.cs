@@ -1,6 +1,9 @@
 ﻿using HotChocolate.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using OrderService.GraphQL;
+using OrderService.Kafka;
 using SolakaDatabase.Models;
 using System.Security.Claims;
 
@@ -11,40 +14,108 @@ namespace OrderService.GraphQL
         [Authorize(Roles = new[] { "Customer" })]
         public async Task<OrdersOutput> AddOrderAsync(
             OrdersInput input, ClaimsPrincipal claimsPrincipal,
-            [Service] SolakaDbContext context)
+            [Service] SolakaDbContext context,
+            [Service] IOptions<KafkaSettings> settings)
         {
             using var transaction = context.Database.BeginTransaction();
             var userName = claimsPrincipal.Identity.Name;
             try
             {
                 var user = context.Users.Where(u => u.Username == userName).FirstOrDefault();
-                var customer = context.Customers.Where(c => c.UserId == user.Id).FirstOrDefault();
+                var customer = context.Customers.Include(c=>c.Orders).Where(c => c.UserId == user.Id).FirstOrDefault();
                 if (customer != null)
                 {
+                    //cek status order 
+                    int orderCustomer = customer.Orders.Where(o=>o.Status=="Pending").Count();
+                    if (orderCustomer >= 3) return new OrdersOutput
+                    {
+                        TransactionDate = DateTime.Now.ToString(),
+                        Message = "Bayar TOd!"
+                    };
+
+                    double totalCost = 0.0;
                     var order = new Order
                     {
                         CustomerId = customer.Id,
-                        Invoice = input.Invoice + "-" + customer.Phone,
+                        TransactionCode =  "077" + customer.Phone,
                         RestoId = input.RestoId,
                         PaymentId = input.PaymentId,
+                        Status = StatusOrder.Pending,
                         Created = DateTime.Now
                     };
                     foreach (var item in input.ListOrderDetails)
                     {
+                        //cek stock
                         var product = context.Products.Where(p => p.Id == item.ProductId).FirstOrDefault();
+                        //if (product.Stock <= item.Quantity) continue; 
+                        if(product.Stock < item.Quantity) return new OrdersOutput
+                        {
+                            TransactionDate = DateTime.Now.ToString(),
+                            Message = "Gagal Membuat Order, Stock Tidak Cukup!"
+                        };
+
+                        if(product.RestoId != input.RestoId) return new OrdersOutput
+                        {
+                            TransactionDate = DateTime.Now.ToString(),
+                            Message = "Gagal Membuat Order, Produk pada resto tersedia!"
+                        };
+
                         var details = new OrderDetail
                         {
                             OrderId = order.Id,
                             ProductId = item.ProductId,
                             Quantity = item.Quantity,
                             Cost = product.Price * item.Quantity,
-                            Status = StatusOrder.WaitingForPayment
                         };
                         order.OrderDetails.Add(details);
+                        totalCost += details.Cost;
+                        product.Stock -= item.Quantity;
+
                     }
+                    order.TotalCost = totalCost;
                     context.Orders.Add(order);
                     context.SaveChanges();
                     await transaction.CommitAsync();
+
+                    //SendDataOrder dengan Kafka
+                    SendDataOrder virtualAccount = new SendDataOrder
+                    {
+                        TransactionId = order.Id,
+                        Virtualaccount = order.TransactionCode, //0778 + phone
+                        Bills = Convert.ToString(order.TotalCost), //total cost
+                        PaymentStatus = order.Status
+                    };
+
+                    var key = DateTime.Now.ToString();
+                    var val = JsonConvert.SerializeObject(virtualAccount);
+                    if (order.PaymentId == 1)
+                    {
+                        bool result = KafkaHelper.SendMessage(settings.Value, "OPO", key, val).Result;
+                        if (result)
+                        {
+                            Console.WriteLine("Sukses Kirim ke Kafka");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Gagal Kirim ke Kafka");
+                        }
+                    }
+                    else if (order.PaymentId == 2)
+                    {
+                        bool result = KafkaHelper.SendMessage(settings.Value, "BANK", key, val).Result;
+                        if (result)
+                        {
+                            Console.WriteLine("Sukses Kirim ke Kafka");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Gagal Kirim ke Kafka");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Payment Not Available");
+                    }
 
                     return new OrdersOutput
                     {
@@ -114,33 +185,17 @@ namespace OrderService.GraphQL
             }
         }
 
-        [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<OrderDetail> UpdateStatusAsync(
-            OrdersUpdate input,
-            [Service] SolakaDbContext context)
-        {
-            var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
-            if (orderDetail != null)
-            {
-                orderDetail.Status = "SUDAH DIBAYAR";
-                context.OrderDetails.Update(orderDetail);
-                await context.SaveChangesAsync();
-            }
-            return await Task.FromResult(orderDetail);
-        }
-
         [Authorize(Roles = new[] { "Customer" })]
         public async Task<OrdersOutput> CancleOrderByCustomerAsync(
-        StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
-        [Service] SolakaDbContext context)
+            StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
+            [Service] SolakaDbContext context)
         {
             var userName = claimsPrincipal.Identity.Name;
 
             var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-            var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
-            var order = context.Orders.FirstOrDefault();
+            var order = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+            //var order = context.Orders.FirstOrDefault();
             var customer = context.Customers.Where(o => o.UserId == user.Id && o.Id == order.CustomerId).FirstOrDefault();
-
             if (customer == null)
             {
                 return new OrdersOutput
@@ -148,32 +203,40 @@ namespace OrderService.GraphQL
                     TransactionDate = DateTime.Now.ToString(),
                     Message = "User tidak ada akses!"
                 };
-
             }
-
-            if (orderDetail != null)
+            if (order != null)
             {
+                order.Status = StatusOrder.Cancel;
 
-                orderDetail.Status = StatusOrder.Cancel;
-
-
-                context.OrderDetails.Update(orderDetail);
+                context.Orders.Update(order);
                 await context.SaveChangesAsync();
-
-
             }
             return new OrdersOutput
             {
                 TransactionDate = DateTime.Now.ToString(),
                 Message = "Berhasil Membatalkan Pesanan!"
             };
-
         }
+
+        //[Authorize(Roles = new[] { "ManagerResto" })]
+        //public async Task<OrderDetail> UpdateStatusAsync(
+        //    OrdersUpdate input,
+        //    [Service] SolakaDbContext context)
+        //{
+        //    var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
+        //    if (orderDetail != null)
+        //    {
+        //        orderDetail.Status = "SUDAH DIBAYAR";
+        //        context.OrderDetails.Update(orderDetail);
+        //        await context.SaveChangesAsync();
+        //    }
+        //    return await Task.FromResult(orderDetail);
+        //}
 
         [Authorize(Roles = new[] { "ManagerApp" })]
         public async Task<Order> DeleteOrderByIdAsync(
-       int id,
-       [Service] SolakaDbContext context)
+            int id,
+            [Service] SolakaDbContext context)
         {
             var order = context.Orders.Where(o => o.Id == id).FirstOrDefault();
             //var OrderDetail = context.OrderDetails.Where(x => x.OrderId == Order.)
@@ -189,8 +252,9 @@ namespace OrderService.GraphQL
 
         [Authorize(Roles = new[] { "ManagerResto" })]
         public async Task<OrdersOutput> UpdateOrderRestoByIdAsync(
-       OrderUpdateByResto input, ClaimsPrincipal claimsPrincipal,
-       [Service] SolakaDbContext context)
+            OrderUpdateByResto input, 
+            ClaimsPrincipal claimsPrincipal,
+            [Service] SolakaDbContext context)
         {
             var userName = claimsPrincipal.Identity.Name;
             var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
@@ -211,7 +275,7 @@ namespace OrderService.GraphQL
 
             if (same != null)
             {
-                updateorderresto.Invoice = input.Invoice;
+                updateorderresto.TransactionCode = input.TransactionCode;
 
                 context.Orders.Update(updateorderresto);
                 await context.SaveChangesAsync();
@@ -230,7 +294,6 @@ namespace OrderService.GraphQL
                     Message = "Gagal Update Order!"
                 };
             }
-
         }
     }
 }

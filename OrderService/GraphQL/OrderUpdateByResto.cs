@@ -3,6 +3,6 @@
     public record OrderUpdateByResto
      (
          int Id,
-    string Invoice
-);
+         string TransactionCode
+     );
 }
