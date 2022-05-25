@@ -5,7 +5,6 @@ namespace OrderService.GraphQL
     public record OrdersInput
     (
       int? Id,
-      string Invoice,
       int RestoId,
       int PaymentId,
 

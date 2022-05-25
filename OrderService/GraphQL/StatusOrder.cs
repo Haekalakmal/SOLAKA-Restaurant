@@ -2,8 +2,8 @@
 {
     public class StatusOrder
     {
-        public static readonly string WaitingForPayment = "Menunggu Pembayaran";
-        public static readonly string SuccessfulPayment = "Pembayaran Berhasil";
-        public static readonly string Cancel = "Pesanan Dibatalkan"; 
+        public static readonly string Pending = "Pending";
+        public static readonly string Completed = "Completed";
+        public static readonly string Cancel = "Cancel"; 
     }
 }
