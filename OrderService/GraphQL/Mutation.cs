@@ -25,6 +25,7 @@ namespace OrderService.GraphQL
                 var customer = context.Customers.Include(c=>c.Orders).Where(c => c.UserId == user.Id).FirstOrDefault();
                 if (customer != null)
                 {
+                    //cek status order 
                     int orderCustomer = customer.Orders.Where(o=>o.Status=="Pending").Count();
                     if (orderCustomer >= 3) return new OrdersOutput
                     {
@@ -44,12 +45,19 @@ namespace OrderService.GraphQL
                     };
                     foreach (var item in input.ListOrderDetails)
                     {
+                        //cek stock
                         var product = context.Products.Where(p => p.Id == item.ProductId).FirstOrDefault();
                         //if (product.Stock <= item.Quantity) continue; 
                         if(product.Stock < item.Quantity) return new OrdersOutput
                         {
                             TransactionDate = DateTime.Now.ToString(),
-                            Message = "Gagal Membuat Order!"
+                            Message = "Gagal Membuat Order, Stock Tidak Cukup!"
+                        };
+
+                        if(product.RestoId != input.RestoId) return new OrdersOutput
+                        {
+                            TransactionDate = DateTime.Now.ToString(),
+                            Message = "Gagal Membuat Order, Produk pada resto tersedia!"
                         };
 
                         var details = new OrderDetail
