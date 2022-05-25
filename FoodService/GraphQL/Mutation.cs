@@ -1,5 +1,6 @@
 ﻿using HotChocolate.AspNetCore.Authorization;
 using SolakaDatabase.Models;
+using System.Security.Claims;
 
 namespace FoodService.GraphQL
 {
@@ -7,14 +8,21 @@ namespace FoodService.GraphQL
     {
         [Authorize(Roles = new[] { "ManagerResto" })]
         public async Task<ProductData> AddFoodAsync(
-          FoodInput input,
-          [Service] SolakaDbContext context)
+           FoodInput input,
+           [Service] SolakaDbContext context, ClaimsPrincipal claimsPrincipal)
         {
-            var food = context.Products.Where(o => o.Id == input.Id).FirstOrDefault();
-            if (food != null)
-            {
-                return await Task.FromResult(new ProductData());
-            }
+
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(u => u.Username == userName).FirstOrDefault();
+            var resto = context.Restaurants.FirstOrDefault();
+            var manager = context.EmployeeRestos.Where(c => c.UserId == user.Id && c.RestoId == resto.Id).FirstOrDefault();
+            //var food = context.Products.Where(o => o.Id == input.Id).FirstOrDefault();
+            if (manager == null)
+                return new ProductData
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager Resto tidak punya akses!"
+                };
             var newfood = new Product
             {
                 Name = input.Name,
@@ -23,23 +31,17 @@ namespace FoodService.GraphQL
                 CategoryId = input.CategoryId,
                 RestoId = input.RestoId
             };
-
-            // EF
-            var ret = context.Products.Add(newfood);
+            context.Products.Add(newfood);
             await context.SaveChangesAsync();
 
-            return await Task.FromResult(new ProductData
+            return new ProductData
             {
-                Id = newfood.Id,
-                Name = newfood.Name,
-                Stock = newfood.Stock,
-                Price = newfood.Price,
-                CategoryId = newfood.CategoryId,
-                RestoId = newfood.RestoId
-            });
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Done Update Order!"
+            };
         }
 
-        [Authorize(Roles = new[] { "ManagerResto" })]
+            [Authorize(Roles = new[] { "ManagerResto" })]
         public async Task<Product> UpdateFoodAsync(
            FoodUpdate input,
            [Service] SolakaDbContext context)
