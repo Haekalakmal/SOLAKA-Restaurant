@@ -14,7 +14,7 @@ namespace FoodService.GraphQL
 
             var userName = claimsPrincipal.Identity.Name;
             var user = context.Users.Where(u => u.Username == userName).FirstOrDefault();
-            var resto = context.Restaurants.FirstOrDefault();
+            var resto = context.Restaurants.Where(r => r.Id == input.RestoId).FirstOrDefault();
             var manager = context.EmployeeRestos.Where(c => c.UserId == user.Id && c.RestoId == resto.Id).FirstOrDefault();
             //var food = context.Products.Where(o => o.Id == input.Id).FirstOrDefault();
             if (manager == null)
@@ -37,17 +37,28 @@ namespace FoodService.GraphQL
             return new ProductData
             {
                 TransactionDate = DateTime.Now.ToString(),
-                Message = "Done Update Order!"
+                Message = "Done Add Food!"
             };
         }
 
-            [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<Product> UpdateFoodAsync(
-           FoodUpdate input,
-           [Service] SolakaDbContext context)
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<ProductData> UpdateFoodAsync(
+       FoodUpdate input,
+       [Service] SolakaDbContext context, ClaimsPrincipal claimsPrincipal)
         {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(u => u.Username == userName).FirstOrDefault();
+            var resto = context.Restaurants.Where(r => r.Id == input.RestoId).FirstOrDefault();
+            var manager = context.EmployeeRestos.Where(c => c.UserId == user.Id && c.RestoId == resto.Id).FirstOrDefault();
             var food = context.Products.Where(o => o.Id == input.Id).FirstOrDefault();
-            if (food != null)
+            if (manager == null)
+                return new ProductData
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager Resto tidak punya akses!"
+                };
+            
+            if(food != null)
             {
                 food.Name = input.Name;
                 food.Stock = input.Stock;
@@ -57,26 +68,47 @@ namespace FoodService.GraphQL
 
                 context.Products.Update(food);
                 await context.SaveChangesAsync();
-            }
+            };
+            
+
+            return new ProductData
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Done Update Food!"
+            };
 
 
-            return await Task.FromResult(food);
         }
-
+           
         [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<Product> DeleteFoodByIdAsync(
-           int id,
-           [Service] SolakaDbContext context)
+        public async Task<ProductData> DeleteFoodByIdAsync(
+            DeleteFood input, int id,
+           [Service] SolakaDbContext context, ClaimsPrincipal claimsPrincipal)
         {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(u => u.Username == userName).FirstOrDefault();
+            var resto = context.Restaurants.Where(r => r.Id == input.RestoId).FirstOrDefault();
+            var manager = context.EmployeeRestos.Where(c => c.UserId == user.Id && c.RestoId == resto.Id).FirstOrDefault();
             var food = context.Products.Where(o => o.Id == id).FirstOrDefault();
-            if (food != null)
+            if (manager == null)
+                return new ProductData
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager Resto tidak punya akses!"
+                };
+            if(food != null)
             {
                 context.Products.Remove(food);
                 await context.SaveChangesAsync();
             }
 
 
-            return await Task.FromResult(food);
+
+            return new ProductData
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Done Delete Food!"
+            };
         }
     }
 }
