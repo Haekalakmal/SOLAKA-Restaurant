@@ -81,6 +81,32 @@ namespace UserService.GraphQL
             return await Task.FromResult(new UserToken(null, null, Message: "Username or password was invalid"));
         }
 
+        public async Task<UserData> RegisterUserAsync(
+            RegisterUser input,
+            [Service] SolakaDbContext context)
+        {
+            var user = context.Users.Where(u => u.Username == input.UserName).FirstOrDefault();
+            if (user != null)
+            {
+                return await Task.FromResult(new UserData());
+            }
+            var newUser = new User
+            {
+                Username = input.UserName,
+                Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
+            };
+
+            // EF
+            var ret = context.Users.Add(newUser);
+            await context.SaveChangesAsync();
+
+            return await Task.FromResult(new UserData
+            {
+                Id = newUser.Id,
+                Username = newUser.Username,
+            });
+        }
+
         //CHANGE PASSWORD
         [Authorize]
         public async Task<User> ChangePasswordAsync(

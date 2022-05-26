@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserService", "UserService\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrderService", "OrderService\OrderService.csproj", "{431142EC-16B9-4AAF-A2E0-BE3FD7DC8E2A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodService", "FoodService\FoodService.csproj", "{896D8B5D-700C-4686-B35D-C28F939E617C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FoodService", "FoodService\FoodService.csproj", "{896D8B5D-700C-4686-B35D-C28F939E617C}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{19D1E96F-FC17-4933-AC68-799B9A20300F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{896D8B5D-700C-4686-B35D-C28F939E617C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{896D8B5D-700C-4686-B35D-C28F939E617C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{896D8B5D-700C-4686-B35D-C28F939E617C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19D1E96F-FC17-4933-AC68-799B9A20300F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19D1E96F-FC17-4933-AC68-799B9A20300F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19D1E96F-FC17-4933-AC68-799B9A20300F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19D1E96F-FC17-4933-AC68-799B9A20300F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

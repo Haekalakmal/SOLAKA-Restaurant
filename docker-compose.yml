@@ -1,0 +1,38 @@
+version: '3.4'
+
+services:
+  foodservice:
+    image: ${DOCKER_REGISTRY-}foodservice
+    build:
+      context: .
+      dockerfile: FoodService/Dockerfile
+
+  orderservice:
+    image: ${DOCKER_REGISTRY-}orderservice
+    build:
+      context: .
+      dockerfile: OrderService/Dockerfile
+
+
+  solakadatabase:
+    image: ${DOCKER_REGISTRY-}solakadatabase
+    build:
+      context: .
+      dockerfile: SolakaDatabase/Dockerfile
+
+
+  userservice:
+    image: ${DOCKER_REGISTRY-}userservice
+    build:
+      context: .
+      dockerfile: UserService/Dockerfile
+
+  server:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - 1433:1433
+    volumes:
+      - ~/apps/mssql/data:/var/lib/mssqlql/data
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Kelompok2@2022
