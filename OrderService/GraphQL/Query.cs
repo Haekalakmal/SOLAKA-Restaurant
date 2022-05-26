@@ -23,7 +23,7 @@ namespace OrderService.GraphQL
 
         [Authorize(Roles = new[] { "ManagerApp" })]
         public IQueryable<Order> GetManagerOrders([Service] SolakaDbContext context) =>
-          context.Orders.Include(o=>o.OrderDetails);
+          context.Orders;
 
         [Authorize(Roles = new[] { "ManagerResto" })]
         public IQueryable<Order> GetManagerRestoOrders([Service] SolakaDbContext context, ClaimsPrincipal claimsPrincipal)

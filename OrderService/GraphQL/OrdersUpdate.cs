@@ -4,8 +4,11 @@ namespace OrderService.GraphQL
 {
     public record OrdersUpdate
     (
-         int Id,
-        int Quantity,
-        int ProductId
+        int? Id,
+        int RestoId,
+        int PaymentId,
+        int? OrderDetailId,
+
+        List<ListOrderDetailsUpdate> ListOrderDetailsUpdate
     );
 }

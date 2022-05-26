@@ -26,11 +26,11 @@ namespace OrderService.GraphQL
                 if (customer != null)
                 {
                     //cek status order 
-                    int orderCustomer = customer.Orders.Where(o=>o.Status=="Pending").Count();
+                    int orderCustomer = customer.Orders.Where(o=>o.Status== StatusOrder.Pending).Count();
                     if (orderCustomer >= 3) return new OrdersOutput
                     {
                         TransactionDate = DateTime.Now.ToString(),
-                        Message = "Bayar TOd!"
+                        Message = "Tidak dapat membuat order baru, mohon selesaikan pembayaran order anda sebelumnya!"
                     };
 
                     double totalCost = 0.0;
@@ -57,7 +57,7 @@ namespace OrderService.GraphQL
                         if(product.RestoId != input.RestoId) return new OrdersOutput
                         {
                             TransactionDate = DateTime.Now.ToString(),
-                            Message = "Gagal Membuat Order, Produk pada resto tersedia!"
+                            Message = "Gagal Membuat Order, Produk pada resto tidak tersedia!"
                         };
 
                         var details = new OrderDetail
@@ -145,42 +145,80 @@ namespace OrderService.GraphQL
             ClaimsPrincipal claimsPrincipal,
             [Service] SolakaDbContext context)
         {
+            using var transaction = context.Database.BeginTransaction();
+
             var userName = claimsPrincipal.Identity.Name;
-            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-
-            var order = context.Orders.FirstOrDefault();
-            var customer = context.Customers.Include(c=>c.Orders).Where(c => c.UserId == user.Id && c.Id == order.CustomerId).FirstOrDefault();
-
-            var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
-
-            if(customer == null) return new OrdersOutput
+            try
             {
-                TransactionDate = DateTime.Now.ToString(),
-                Message = "Customer tidak ada akses!"
-            };
+                var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
 
-            if (orderDetail != null)
-            {
-                var product = context.Products.FirstOrDefault();
+                var order = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+                var customer = context.Customers.Include(c => c.Orders).Where(c => c.UserId == user.Id && c.Id == order.CustomerId).FirstOrDefault();
 
-                orderDetail.ProductId = input.ProductId;
-                orderDetail.Quantity = input.Quantity;
-                orderDetail.Cost = product.Price * input.Quantity;
-                context.OrderDetails.Update(orderDetail);
-                await context.SaveChangesAsync();
-
-                return new OrdersOutput
+                if (customer == null) return new OrdersOutput
                 {
                     TransactionDate = DateTime.Now.ToString(),
-                    Message = "Done Update Order!"
+                    Message = "Customer tidak ada akses!"
                 };
-            }
-            else
-            {
+
+                if (order == null || order.Status != StatusOrder.Pending) return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Order Tidak Ditemukan atau Order telah selesai"
+                };
+
+                double totalCost = 0.0;
+                order.RestoId = input.RestoId;
+                order.PaymentId = input.PaymentId;
+
+                foreach (var item in input.ListOrderDetailsUpdate)
+                {
+                    var orderDetail = context.OrderDetails.Where(o => o.OrderId == order.Id && o.Id == item.Id).FirstOrDefault();
+                    if (orderDetail == null) return new OrdersOutput
+                    {
+                        TransactionDate = DateTime.Now.ToString(),
+                        Message = "Order Tidak Ditemukan!"
+                    };
+
+                    var product = context.Products.Where(p => p.Id == item.ProductId).FirstOrDefault();
+
+                    if (product.RestoId != input.RestoId) return new OrdersOutput
+                    {
+                        TransactionDate = DateTime.Now.ToString(),
+                        Message = "Gagal Update Order, Produk pada resto tidak tersedia!"
+                    };
+                    //var product = context.Products.FirstOrDefault();
+
+                    orderDetail.Id = item.Id;
+                    orderDetail.ProductId = item.ProductId;
+                    orderDetail.Quantity = item.Quantity;
+                    orderDetail.Cost = product.Price * item.Quantity;
+
+                    order.OrderDetails.Add(orderDetail);
+                    totalCost += orderDetail.Cost;
+                }
+
+                order.TotalCost = totalCost;
+                context.Orders.Update(order);
+
+                context.SaveChanges();
+                await transaction.CommitAsync();
+
                 return new OrdersOutput
                 {
                     TransactionDate = DateTime.Now.ToString(),
-                    Message = "Gagal Update Order!"
+                    Message = "Berhasil Update Order!"
+                };
+
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = ex.Message
                 };
             }
         }
@@ -260,12 +298,12 @@ namespace OrderService.GraphQL
             var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
 
             var resto = context.Restaurants.FirstOrDefault();
-            var managerresto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == resto.Id).FirstOrDefault();
+            var managerResto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == resto.Id).FirstOrDefault();
 
             var same = context.Orders.Where(o => o.RestoId == resto.Id).FirstOrDefault();
             var updateorderresto = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
 
-            if (managerresto == null)
+            if (managerResto == null)
 
                 return new OrdersOutput
                 {
