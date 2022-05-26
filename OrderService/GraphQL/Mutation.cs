@@ -224,9 +224,9 @@ namespace OrderService.GraphQL
         }
 
         [Authorize(Roles = new[] { "Customer" })]
-        public async Task<OrdersOutput> CancleOrderByCustomerAsync(
-            StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
-            [Service] SolakaDbContext context)
+        public async Task<OrdersOutput> CancelOrderByCustomerAsync(
+                 StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
+                 [Service] SolakaDbContext context)
         {
             var userName = claimsPrincipal.Identity.Name;
 
@@ -234,84 +234,114 @@ namespace OrderService.GraphQL
             var order = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
             //var order = context.Orders.FirstOrDefault();
             var customer = context.Customers.Where(o => o.UserId == user.Id && o.Id == order.CustomerId).FirstOrDefault();
+
             if (customer == null)
             {
+
                 return new OrdersOutput
                 {
                     TransactionDate = DateTime.Now.ToString(),
-                    Message = "User tidak ada akses!"
+                    Message = "User tidak mempunyai akses!"
                 };
             }
-            if (order != null)
+            if (order != null && order.Status == StatusOrder.Pending)
             {
                 order.Status = StatusOrder.Cancel;
 
                 context.Orders.Update(order);
                 await context.SaveChangesAsync();
-            }
-            return new OrdersOutput
-            {
-                TransactionDate = DateTime.Now.ToString(),
-                Message = "Berhasil Membatalkan Pesanan!"
-            };
-        }
-
-        //[Authorize(Roles = new[] { "ManagerResto" })]
-        //public async Task<OrderDetail> UpdateStatusAsync(
-        //    OrdersUpdate input,
-        //    [Service] SolakaDbContext context)
-        //{
-        //    var orderDetail = context.OrderDetails.Where(o => o.Id == input.Id).FirstOrDefault();
-        //    if (orderDetail != null)
-        //    {
-        //        orderDetail.Status = "SUDAH DIBAYAR";
-        //        context.OrderDetails.Update(orderDetail);
-        //        await context.SaveChangesAsync();
-        //    }
-        //    return await Task.FromResult(orderDetail);
-        //}
-
-        [Authorize(Roles = new[] { "ManagerApp" })]
-        public async Task<Order> DeleteOrderByIdAsync(
-            int id,
-            [Service] SolakaDbContext context)
-        {
-            var order = context.Orders.Where(o => o.Id == id).FirstOrDefault();
-            //var OrderDetail = context.OrderDetails.Where(x => x.OrderId == Order.)
-            if (order != null)
-            {
-                context.OrderDetails.RemoveRange(context.OrderDetails.Where(x => x.OrderId == id));
-                context.Orders.RemoveRange(context.Orders.Where(x => x.Id == id));
-
-                await context.SaveChangesAsync();
-            }
-            return await Task.FromResult(order);
-        }
-
-        [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<OrdersOutput> UpdateOrderRestoByIdAsync(
-            OrderUpdateByResto input, 
-            ClaimsPrincipal claimsPrincipal,
-            [Service] SolakaDbContext context)
-        {
-            var userName = claimsPrincipal.Identity.Name;
-            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
-
-            var resto = context.Restaurants.FirstOrDefault();
-            var managerResto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == resto.Id).FirstOrDefault();
-
-            var same = context.Orders.Where(o => o.RestoId == resto.Id).FirstOrDefault();
-            var updateorderresto = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
-
-            if (managerResto == null)
 
                 return new OrdersOutput
                 {
                     TransactionDate = DateTime.Now.ToString(),
-                    Message = "Manager tidak ada akses!"
+                    Message = "Berhasil Membatalkan Pesanan!"
+                };
+            }
+            return new OrdersOutput
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Order tidak dapat diubah!"
+            };
+
+
+        }
+
+
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<OrdersOutput> DeleteOrderByIdAsync(
+       StatusOrderInput input, ClaimsPrincipal claimsPrincipal,
+       [Service] SolakaDbContext context)
+        {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+
+            var ordersame = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+            var managerresto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == ordersame.RestoId).FirstOrDefault();
+
+            var updateorderresto = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+
+            if (managerresto == null)
+
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager tidak mempunyai akses!"
                 };
 
-            if (same != null)
+            if (managerresto != null && updateorderresto.Status == StatusOrder.Pending)
+            {
+
+
+                updateorderresto.Status = StatusOrder.Cancel;
+
+
+
+                context.Orders.Update(updateorderresto);
+                await context.SaveChangesAsync();
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Berhasil Hapus Order!"
+                };
+            }
+            return new OrdersOutput
+            {
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Order tidak dapat diubah!"
+            };
+
+
+        }
+
+
+
+
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<OrdersOutput> UpdateOrderRestoByIdAsync(
+        OrderUpdateByResto input, ClaimsPrincipal claimsPrincipal,
+        [Service] SolakaDbContext context)
+        {
+            var userName = claimsPrincipal.Identity.Name;
+            var user = context.Users.Where(o => o.Username == userName).FirstOrDefault();
+
+
+            var ordersame = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+            var managerresto = context.EmployeeRestos.Where(o => o.UserId == user.Id && o.RestoId == ordersame.RestoId).FirstOrDefault();
+            var updateorderresto = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+
+
+            var orders = context.Orders.Where(o => o.Id == input.Id).FirstOrDefault();
+
+
+            if (managerresto == null)
+
+                return new OrdersOutput
+                {
+                    TransactionDate = DateTime.Now.ToString(),
+                    Message = "Manager tidak mempunyai akses!"
+                };
+
+            if (managerresto != null && orders.Status == StatusOrder.Pending)
             {
                 updateorderresto.TransactionCode = input.TransactionCode;
 
@@ -321,17 +351,21 @@ namespace OrderService.GraphQL
                 return new OrdersOutput
                 {
                     TransactionDate = DateTime.Now.ToString(),
-                    Message = "Done Update Order!"
+                    Message = "Berhasil Update Order!"
                 };
+
+
             }
-            else
+            return new OrdersOutput
             {
-                return new OrdersOutput
-                {
-                    TransactionDate = DateTime.Now.ToString(),
-                    Message = "Gagal Update Order!"
-                };
-            }
+                TransactionDate = DateTime.Now.ToString(),
+                Message = "Order tidak dapat diubah!"
+            };
+
         }
+
+
     }
+
+
 }
