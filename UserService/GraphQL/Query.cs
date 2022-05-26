@@ -32,33 +32,6 @@ namespace UserService.GraphQL
             var kurirs = context.Users.Where(k => k.Customers.Any(o => o.RoleId == roleCust.Id));
             return kurirs.AsQueryable();
         }
-
-        //[Authorize(Roles = new[] { "ManagerResto" })]
-        //public IQueryable<User> GetCustomer([Service] SolakaDbContext context)
-        //{
-        //    var roleCust = context.Roles.Where(k => k.Name == "Customer").FirstOrDefault();
-        //    var kurirs = context.Users.Where(k => k.Customers.Any(o => o.RoleId == roleCust.Id));
-        //    return kurirs.AsQueryable();
-        //}
-
-        /* public IQueryable<EmployeeResto> GetEmployeeResto([Service] SolakaDbContext context)
-         {
-             var roleResto = context.Roles.Where(k => k.Name == "OperatorResto" && k.Name == "ManagerResto");
-             return roleResto.AsQueryable();
-             return new List<EmployeeResto>().AsQueryable();
-         }*/
-
-        //[Authorize(Roles = new[] { "MANAGER" })]
-        //public IQueryable<Courier> GetCourierProfiles([Service] FoodDeliveryContext context) =>
-        //    context.Couriers.Select(p => new Courier()
-        //    {
-        //        Id = p.Id,
-        //        CourierName = p.CourierName,
-        //        Phone = p.Phone,
-        //        UserId = p.UserId,
-        //        Availibility = p.Availibility
-        //    });
-
         
     }
 }

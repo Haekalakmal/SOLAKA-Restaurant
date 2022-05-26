@@ -86,7 +86,7 @@ namespace SolakaDatabase.Models
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.EmployeeApps)
                     .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_EmployeeAPP_User");
             });
 
@@ -113,7 +113,7 @@ namespace SolakaDatabase.Models
                 entity.HasOne(d => d.User)
                     .WithMany(p => p.EmployeeRestos)
                     .HasForeignKey(d => d.UserId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_EmployeeResto_User");
             });
 

@@ -1,6 +1,6 @@
 ﻿namespace UserService.GraphQL
 {
-    public record RegisteOperatorResto
+    public record RegisterOperatorResto
     (
         int? Id,
         int RestoId,

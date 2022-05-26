@@ -99,10 +99,89 @@ namespace UserService.GraphQL
             return await Task.FromResult(user);
         }
 
-        //REGISTER
+        //======================================================MANAGE EMPLOYEE APP================================================================//
+
+        //ADD Employee App
+        [Authorize(Roles = new[] { "AdminApp" })]
+        public async Task<UserData> RegisterManagerAppAsync(
+           RegisterApp input,
+           [Service] SolakaDbContext context)
+        {
+            var role = context.Roles.Where(o => o.Id == 3).FirstOrDefault();
+            var user = context.Users.Where(o => o.Id == input.Id).FirstOrDefault();
+            if (user != null)
+            {
+                return await Task.FromResult(new UserData());
+            }
+            var newUser = new User
+            {
+                Username = input.UserName,
+                Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
+            };
+            var ret = context.Users.Add(newUser);
+            var employeeApp = new EmployeeApp
+            {
+                RoleId = role.Id,
+                UserId = newUser.Id,
+                Fullname = input.Fullname,
+                Email = input.Email,
+                Created = DateTime.Now,
+
+            };
+            newUser.EmployeeApps.Add(employeeApp);
+            // EF
+
+            await context.SaveChangesAsync();
+            return await Task.FromResult(new UserData
+            {
+                Id = newUser.Id,
+                Username = newUser.Username,
+
+            });
+        }
+
+        //UPDATE EMPLOYEE APP
+        [Authorize(Roles = new[] { "AdminApp" })]
+        public async Task<UserData> UpdateEmployeeAppAsync(
+            UserData input,
+            [Service] SolakaDbContext context)
+        {
+            var user = context.Users.Where(o => o.Id == input.Id).FirstOrDefault();
+            if (user != null)
+            {
+                user.Username = input.Username;
+
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
+            }
+
+            return input;
+        }
+
+        //DELETE EMPLOYEE APP
+        [Authorize(Roles = new[] { "AdminApp" })]
+        public async Task<User> DeleteEmployeeAppByIdAsync(
+            int id,
+            [Service] SolakaDbContext context)
+        {
+            var user = context.Users.Where(o => o.Id == id).Include(o => o.EmployeeApps).FirstOrDefault();
+            if (user != null)
+            {
+                context.Users.Remove(user);
+                await context.SaveChangesAsync();
+            }
+
+            return await Task.FromResult(user);
+        }
+
+
+
+        //======================================================MANAGE EMPLOYEE RESTO===============================================================//
+
+        //ADD OPERATOR RESTO
         [Authorize(Roles = new[] { "AdminApp" })]
         public async Task<UserData> RegisterOperatorRestoAsync(
-           RegisteOperatorResto input,
+           RegisterOperatorResto input,
            [Service] SolakaDbContext context)
         {
             var role = context.Roles.Where(o => o.Id == 2).FirstOrDefault();
@@ -139,9 +218,10 @@ namespace UserService.GraphQL
             });
         }
 
+        //ADD MANAGER RESTO
         [Authorize(Roles = new[] { "AdminApp" })]
         public async Task<UserData> RegisterManagerRestoAsync(
-           RegisteOperatorResto input,
+           RegisterOperatorResto input,
            [Service] SolakaDbContext context)
         {
             var role = context.Roles.Where(o => o.Id == 4).FirstOrDefault();
@@ -165,8 +245,6 @@ namespace UserService.GraphQL
                 Email = input.Email,
             };
             newUser.EmployeeRestos.Add(employeeResto);
-            // EF
-            //var ret = context.Users.Add(newUser);
             await context.SaveChangesAsync();
 
             return await Task.FromResult(new UserData
@@ -176,45 +254,46 @@ namespace UserService.GraphQL
             });
         }
 
-        [Authorize(Roles = new[] { "AdminApp" })]
-        public async Task<UserData> RegisterManagerAppAsync(
-           RegisterApp input,
-           [Service] SolakaDbContext context)
+        //UPDATE EMPLOYEE RESTO
+        [Authorize(Roles = new[] { "ManagerApp" })]
+        public async Task<UserData> UpdateEmployeeRestoAsync(
+            UserData input,
+            [Service] SolakaDbContext context)
         {
-            var role = context.Roles.Where(o => o.Id == 3).FirstOrDefault();
+
             var user = context.Users.Where(o => o.Id == input.Id).FirstOrDefault();
             if (user != null)
             {
-                return await Task.FromResult(new UserData());
+                user.Username = input.Username;
+
+               
+                context.Users.Update(user);
+                await context.SaveChangesAsync();
             }
-            var newUser = new User
-            {
-                Username = input.UserName,
-                Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
-            };
-            var ret = context.Users.Add(newUser);
-            var employeeApp = new EmployeeApp
-            {
-                RoleId = role.Id,
-                UserId = newUser.Id,
-                Fullname = input.Fullname,
-                Email = input.Email,
-                Created = DateTime.Now,
-                
-            };
-            newUser.EmployeeApps.Add(employeeApp);
-            // EF
-            
-            await context.SaveChangesAsync();
-
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.Id,
-                Username = newUser.Username,
-
-            });
+            return input;
         }
 
+        //DELETE EMPLOYEE RESTO
+        [Authorize(Roles = new[] { "ManagerApp" })]
+        public async Task<User> DeleteEmployeeRestoByIdAsync(
+            int id,
+            [Service] SolakaDbContext context)
+        {
+            var user = context.Users.Where(o => o.Id == id).Include(o => o.EmployeeRestos).FirstOrDefault();
+            if (user != null)
+            {
+                context.Users.Remove(user);
+                await context.SaveChangesAsync();
+            }
+
+            return await Task.FromResult(user);
+        }
+
+        
+
+        //============================================================MANAGE CUSTOMER===============================================================//
+
+        //ADD Customer
         public async Task<UserData> RegisterCustomerAsync(
            RegisterCustomer input,
            [Service] SolakaDbContext context)
@@ -251,86 +330,43 @@ namespace UserService.GraphQL
             });
         }
 
+        //UPDATE Customer
         [Authorize(Roles = new[] { "ManagerResto" })]
-        public async Task<Customer> UpdateCustomerAsync(
-            RegisterCustomer input,
-            [Service] SolakaDbContext context)
-        {
-            var cust = context.Customers.Where(o => o.Id == input.Id).FirstOrDefault();
-            if (cust != null)
-            {
-
-                cust.Name = input.Name;
-
-                context.Customers.Update(cust);
-                await context.SaveChangesAsync();
-            }
-
-            return await Task.FromResult(cust);
-        }
-
-        public async Task<UserData> RegisterUserAsync(
-            RegisterUser input,
-            [Service] SolakaDbContext context)
-        {
-            var user = context.Users.Where(u => u.Username == input.UserName).FirstOrDefault();
-            if (user != null)
-            {
-                return await Task.FromResult(new UserData());
-            }
-            var newUser = new User
-            {
-                Username = input.UserName,
-                Password = BCrypt.Net.BCrypt.HashPassword(input.Password) // encrypt password
-            };
-
-            // EF
-            var ret = context.Users.Add(newUser);
-            await context.SaveChangesAsync();
-
-            return await Task.FromResult(new UserData
-            {
-                Id = newUser.Id,
-                Username = newUser.Username,
-            });
-        }
-
-        //UPDATE USER
-        [Authorize(Roles = new[] { "ManagerApp" })]
-        public async Task<User> UpdateUserAsync(
+        public async Task<UserData> UpdateCustomerAsync(
             UserData input,
             [Service] SolakaDbContext context)
         {
-            var user = context.Users.Where(o => o.Id == input.Id).FirstOrDefault();
-            if (user != null)
+            var cust = context.Users.Where(o => o.Id == input.Id).FirstOrDefault();
+            if (cust != null)
             {
 
-                user.Username = input.Username;
+                cust.Username = input.Username;
 
-                context.Users.Update(user);
+                context.Users.Update(cust);
                 await context.SaveChangesAsync();
             }
 
-            return await Task.FromResult(user);
+            return input;
         }
 
-        //DELETE USER
-        [Authorize(Roles = new[] { "ManagerApp" })]
-        public async Task<User> DeleteUserByIdAsync(
+        //DELETE Customer
+        [Authorize(Roles = new[] { "ManagerResto" })]
+        public async Task<User> DeleteCustomerByIdAsync(
             int id,
             [Service] SolakaDbContext context)
         {
-            var user = context.Users.Where(o => o.Id == id).FirstOrDefault();
+            var user = context.Users.Where(o => o.Id == id).Include(o=>o.Customers).FirstOrDefault();
             if (user != null)
             {
                 context.Users.Remove(user);
                 await context.SaveChangesAsync();
             }
-
             return await Task.FromResult(user);
         }
 
-        //Manage RESTO
+        
+        //============================================================MANAGE RESTO===============================================================//
+
         [Authorize(Roles = new[] { "ManagerApp" })]
         public async Task<RestoData> AddRestoAsync(
             AddResto input,
