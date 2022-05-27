@@ -8,7 +8,7 @@ namespace SolakaDatabase.Models
         public int Id { get; set; }
         public int UserId { get; set; }
         public int RoleId { get; set; }
-        public int RestoId { get; set; }
+        public int? RestoId { get; set; }
         public string Fullname { get; set; } = null!;
         public string Email { get; set; } = null!;
 

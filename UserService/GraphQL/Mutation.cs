@@ -436,12 +436,12 @@ namespace UserService.GraphQL
             }
             return await Task.FromResult(resto);
         }
-        [Authorize(Roles = new[] { "ManagerResto" })]
+        [Authorize(Roles = new[] { "ManagerApp" })]
         public async Task<Restaurant> DeleteRestoByIdAsync(
             int id,
             [Service] SolakaDbContext context)
         {
-            var resto = context.Restaurants.Where(o => o.Id == id).FirstOrDefault();
+            var resto = context.Restaurants.Where(o => o.Id == id).Include(o=>o.EmployeeRestos).FirstOrDefault();
             if (resto != null)
             {
                 context.Restaurants.Remove(resto);
